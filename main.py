@@ -405,19 +405,6 @@ HFIndex_averages = [0.961, 0.821, -0.688, 0.420]
 
 
 def difference_of_means(x_averages, y_averages, name):
-    # for i in range(4):
-    #
-    #     diff = x_averages - y_averages
-    #     # Paired t-test
-    #     t_stat, p_val_t = stats.ttest_rel(x_averages[i], y_averages[i])
-    #
-    #     if diff.std(ddof=1) == 0:
-    #         print(f"All differences are identical (mean diff = {diff.mean():.6f}).")
-    #         print("Paired t-test is not defined (zero variance).")
-    #     else:
-    #         print(name + " Paired t-test:")
-    #         print(f"  t-stat = {t_stat:.4f}, p-value = {p_val_t:.4f}")
-
     t_stat, p_val_t = stats.ttest_rel(x_averages, y_averages)
     print(name + " Paired t-test:")
     print(f"  t-stat = {t_stat:.4f}, p-value = {p_val_t:.4f}")
