@@ -390,4 +390,127 @@ print(MS_model.params)
 print("HF Industry")
 print(HF_model.params)
 
+
+# HYPOTHESIS TESTING
+
+MS_averages = [0.386, 0.796, -0.243, 0.010]
+CA_averages = [1.247, 0.581, -0.108, 0.298]
+EquityLS_averages = [0.785, 0.863, 0.002, 0.250]
+EMN_averages = [-0.106, 0.648, 0.245, 0.294]
+ED_averages = [1.009, 0.983, -0.516, 0.042]
+FIA_averages = [0.837, 0.083, -0.138, 0.330]
+GM_averages = [0.825, 0.715, 0.541, -0.140]
+MA_averages = [0.784, 0.627, 0.083, -0.168]
+HFIndex_averages = [0.961, 0.821, -0.688, 0.420]
+
+
+def difference_of_means(x_averages, y_averages, name):
+    # for i in range(4):
+    #
+    #     diff = x_averages - y_averages
+    #     # Paired t-test
+    #     t_stat, p_val_t = stats.ttest_rel(x_averages[i], y_averages[i])
+    #
+    #     if diff.std(ddof=1) == 0:
+    #         print(f"All differences are identical (mean diff = {diff.mean():.6f}).")
+    #         print("Paired t-test is not defined (zero variance).")
+    #     else:
+    #         print(name + " Paired t-test:")
+    #         print(f"  t-stat = {t_stat:.4f}, p-value = {p_val_t:.4f}")
+
+    t_stat, p_val_t = stats.ttest_rel(x_averages, y_averages)
+    print(name + " Paired t-test:")
+    print(f"  t-stat = {t_stat:.4f}, p-value = {p_val_t:.4f}")
+
+
+
+difference_of_means(MS_averages, CA_averages, "Multi-Strategy vs. Convertible Arbitrage")
+difference_of_means(MS_averages, EquityLS_averages, "Multi-Strategy vs. Equity L/S")
+difference_of_means(MS_averages, EMN_averages, "Multi-Strategy vs. Equity Market Neutral")
+difference_of_means(MS_averages, ED_averages, "Multi-Strategy vs. Event-Driven")
+difference_of_means(MS_averages, FIA_averages, "Multi-Strategy vs. Fixed Income Arbitrage")
+difference_of_means(MS_averages, GM_averages, "Multi-Strategy vs. Global Macro")
+difference_of_means(MS_averages, MA_averages, "Multi-Strategy vs. Merger Arbitrage")
+difference_of_means(MS_averages, HFIndex_averages, "Multi-Strategy vs. BarclayHedge Fund Index")
+
+
+
+# FORECASTING CALCULATIONS
+def MA_forecast(data_set, spx_data, name, beta, mu, theta):
+    epsilons = []
+
+    # HISTORICAL EPSILON CALCULATIONS
+    for i in range(90):
+        calculated_epsilon = 0
+        previous_epsilon = 0
+
+        if i == 0:
+            previous_epsilon = 0
+        else:
+            previous_epsilon = epsilons[i - 1]
+
+        calculated_epsilon = data_set.iloc[i] - (beta * spx_data.iloc[i]) - mu - (theta * previous_epsilon)
+
+        epsilons.append(calculated_epsilon)
+
+    # JULY FORECAST
+    estimated_y = (beta * 0.021667) + mu + 0 + (theta * epsilons[len(epsilons)-1])
+    print(name + "'s JULY FORECAST: " + str(estimated_y))
+
+
+
+def AR_forecast(data_set, spx_data, name, beta, mu, phi,):
+    epsilons = []
+
+    # HISTORICAL EPSILON CALCULATIONS
+    for i in range(90):
+        calculated_epsilon = 0
+        previous_epsilon = 0
+
+        if i == 0:
+            previous_epsilon = 0
+        else:
+            previous_epsilon = epsilons[i - 1]
+
+        calculated_epsilon = data_set.iloc[i] - (beta * spx_data.iloc[i]) - mu - (phi * data_set.iloc[i-1])
+
+        epsilons.append(calculated_epsilon)
+
+    # JULY FORECAST
+    estimated_y = (beta * 0.021667) + mu + (phi * data_set.iloc[len(data_set) - 1]) + 0
+    print(name + "'s JULY FORECAST: " + str(estimated_y))
+
+
+def ARMA_forecast(data_set, spx_data, name, beta, phi, theta):
+    epsilons = []
+
+    # HISTORICAL EPSILON CALCULATIONS
+    for i in range(90):
+        calculated_epsilon = 0
+        previous_epsilon = 0
+
+        if i == 0:
+            previous_epsilon = 0
+        else:
+            previous_epsilon = epsilons[i - 1]
+        if i > 1:
+            calculated_epsilon = data_set.iloc[i] - (beta * spx_data.iloc[i]) - (phi * (data_set.iloc[i - 1] - data_set.iloc[i - 2])) - (theta * epsilons[len(epsilons) - 1])
+
+        epsilons.append(calculated_epsilon)
+
+    # JULY FORECAST
+    estimated_y = (beta * 0.021667) + (phi * (data_set.iloc[len(data_set)- 1] - data_set.iloc[len(data_set) - 2])) + (theta * epsilons[len(epsilons) - 1])
+    print(name + "'s JULY FORECAST: " + str(estimated_y))
+
+
+MA_forecast(index_data["Convertible Arbitrage"], index_data["SPX Return"], "Convertible Arbitrage",0.139233, 0.004160, 0.135369)
+MA_forecast(index_data["Equity L/S"], index_data["SPX Return"], "Equity L/S",0.236798, 0.002883, 0.051052)
+ARMA_forecast(index_data["Equity Market Neutral"], index_data["SPX Return"], "Equity Market Neutral", 0.161284,0.031837, -0.847112)
+MA_forecast(index_data["Event Driven"], index_data["SPX Return"], "Event-Driven Arbitrage", 0.385806, 0.001628, 0.075582)
+AR_forecast(index_data["Fixed Income Arbitrage"], index_data["SPX Return"], "Fixed Income Arbitrage", 0.039215,0.003579, 0.263777)
+MA_forecast(index_data["Global Macro"], index_data["SPX Return"], "Global Macro", 0.184167,0.003516,0.042511)
+MA_forecast(index_data["Merger Arbitrage"], index_data["SPX Return"], "Merger Arbitrage", 0.161284, 0.002766, -0.020043)
+MA_forecast(index_data["Multi Strategy"], index_data["SPX Return"], "Multi-Strategy", 0.216068,0.000897,0.090294)
+MA_forecast(index_data["Barclay Hedge Fund Index"], index_data["SPX Return"], "BarclayHedge Fund Index", 0.361215, 0.001652, -0.133401)
+
 # END
